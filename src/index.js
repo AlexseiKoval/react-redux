@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import { render } from 'react-dom';
 
-import Home from './Home';
-import Hello from './Hello';
+import SearchAppBar from './components/panel';
+import Products from './components/products';
+import Product from './components/product';
+
 import './style.css';
 
 
@@ -13,10 +15,28 @@ import { combineReducers, createStore } from "redux";
 
 
 let rootReducer = combineReducers({
-  name: (state = ' MY name ', action) => {
+  search: (state = '', action) => {
     switch (action.type) {
-      case 'newname':
-        return action.name
+      case 'newsearch':
+        return action.search
+      default:
+        return state
+    }
+  },
+  products: (state = [{ id: 1, title: 'first title' }], action) => {
+
+    switch (action.type) {
+      case 'updateproduct':
+        const findState = action.product.id ? state.find(row => row.id.toString() === action.product.id.toString()) : ''
+        if (findState) {
+          findState.title = action.product.title
+          return [...state]
+        } else {
+          const maxId = state.reduce((acum, row) => row.id > acum ? row.id : acum, 1)
+
+          console.log('maxId', maxId)
+          return [...state, { id: (maxId + 1), title: action.product.title }]
+        }
       default:
         return state
     }
@@ -34,31 +54,23 @@ store.subscribe(() => {
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      name: 'React'
-    };
+  }
+
+  onChangeSearsh = (value) => {
+    store.dispatch({ type: 'newsearch', search: value })
   }
 
   render() {
     return (
 
       <Provider store={store}>
+        <SearchAppBar onChangeSearsh={this.onChangeSearsh} value={store.getState().search} />
         <Router>
           <div>
-            <ul>
-              <li>
-                <Link to="/">Home</Link>
-              </li>
-              <li>
-                <Link to="/Hello">Hello</Link>
-              </li>
-
-            </ul>
-
             <hr />
-
-            <Route exact path="/" component={Home} />
-            <Route exact path="/Hello" component={Hello} />
+            <Route exact path="/" component={Products} />
+            <Route exact path={"/Product/:id"} component={Product} />
+            <Route exact path={"/Product"} component={Product} />
           </div>
         </Router>
       </Provider>
